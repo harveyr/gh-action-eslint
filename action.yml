@@ -1,0 +1,17 @@
+name: Changed files by extension
+description: Outputs files changed since master branch by extension
+author: Harvey Rogers
+runs:
+  using: node12
+  main: lib/main.js
+inputs:
+  github-token:
+    description: Github auth token
+    required: true
+  patterns:
+    description: Space-separated patterns to pass to eslint
+    required: false
+    default: '.'
+  working-directory:
+    description: Run eslint from this dir
+    required: false
