@@ -53,6 +53,10 @@ async function run() {
     const path = filePath.substring(GITHUB_WORKSPACE.length + 1)
     for (const msg of messages) {
       const { line, severity, ruleId, message } = msg
+      if (!line) {
+        core.warning(`Not including annotation with no 'line' value: ${JSON.stringify(msg)}`)
+        continue
+      }
       annotations.push({
         path,
         start_line: line,
