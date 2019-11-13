@@ -23,6 +23,7 @@ export async function captureOutput(
   await exec.exec(command, args, {
     cwd,
     failOnStdErr,
+    ignoreReturnCode: failOnStdErr === false,
     listeners: {
       stdout: (data: Buffer): void => {
         stdout += data.toString()
