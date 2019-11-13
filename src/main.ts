@@ -56,48 +56,48 @@ async function run() {
 
   console.log('Got %s lints', lints.length)
 
-  const annotations = []
-  for (const lint of lints) {
-    const { filePath, line, message, severity } = lint
-    const path = filePath.substring(GITHUB_WORKSPACE.length + 1)
-    annotations.push({
-      path,
-      start_line: line,
-      end_line: line,
-      annotation_level: getAnnotationLevel(severity),
-      message,
-    })
-  }
+  // const annotations = []
+  // for (const lint of lints) {
+  //   const { filePath, line, message, severity } = lint
+  //   const path = filePath.substring(GITHUB_WORKSPACE.length + 1)
+  //   annotations.push({
+  //     path,
+  //     start_line: line,
+  //     end_line: line,
+  //     annotation_level: getAnnotationLevel(severity),
+  //     message,
+  //   })
+  // }
 
-  const repoData = github.context.payload.repository
-  if (!repoData) {
-    return core.setFailed('repository not found')
-  }
+  // const repoData = github.context.payload.repository
+  // if (!repoData) {
+  //   return core.setFailed('repository not found')
+  // }
 
-  const [owner, repo] = GITHUB_REPOSITORY.split('/')
-  core.debug(`Found Github owner ${owner}, repo ${repo}`)
+  // const [owner, repo] = GITHUB_REPOSITORY.split('/')
+  // core.debug(`Found Github owner ${owner}, repo ${repo}`)
 
-  const githubToken = core.getInput('github-token')
-  if (!githubToken) {
-    return core.setFailed('github-token is required')
-  }
+  // const githubToken = core.getInput('github-token')
+  // if (!githubToken) {
+  //   return core.setFailed('github-token is required')
+  // }
 
-  const client = new github.GitHub(githubToken)
+  // const client = new github.GitHub(githubToken)
 
-  console.log(`Posting ${annotations.length} annotations`)
+  // console.log(`Posting ${annotations.length} annotations`)
 
-  return client.checks.create({
-    name: 'ESLint',
-    conclusion: annotations.length ? 'failure' : 'success',
-    head_sha: GITHUB_SHA,
-    owner,
-    repo,
-    output: {
-      title: 'ESLint',
-      summary: `${annotations.length} lints reported`,
-      annotations,
-    },
-  })
+  // return client.checks.create({
+  //   name: 'ESLint',
+  //   conclusion: annotations.length ? 'failure' : 'success',
+  //   head_sha: GITHUB_SHA,
+  //   owner,
+  //   repo,
+  //   output: {
+  //     title: 'ESLint',
+  //     summary: `${annotations.length} lints reported`,
+  //     annotations,
+  //   },
+  // })
 }
 
 
