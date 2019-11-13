@@ -1,6 +1,5 @@
-import * as eslint from 'eslint'
 import * as core from '@actions/core'
-import { runEslint } from './eslint'
+import { runEslint, getVersion as getEslintVersion } from './eslint'
 
 // TODO: Use a TS import once this is fixed: https://github.com/actions/toolkit/issues/199
 // import * as github from '@actions/github'
@@ -33,6 +32,9 @@ async function run() {
     .filter(p => {
       return p.length > 0
     })
+
+  const version = await getEslintVersion()
+  console.log('Running ESLint %s', version)
 
   await runEslint(patterns)
 
