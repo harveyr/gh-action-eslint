@@ -46,12 +46,15 @@ async function run() {
       return p.length > 0
     })
 
-  // Cause the version to be printed to the logs
+  // Cause the version to be printed to the logs. We want to make sure we're
+  // using the version in the repo under test, not the one from this repo.
   await getEslintVersion()
 
   const lints = await runEslint(patterns, {
     cwd: core.getInput('working-directory'),
   })
+
+  console.log('Got %s lints', lints.length)
 
   const annotations = []
   for (const lint of lints) {
