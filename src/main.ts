@@ -23,8 +23,6 @@ async function run() {
     return core.setFailed('GITHUB_SHA was not set')
   }
 
-  const workingDir = core.getInput('working-directory')
-
   const patterns = core
     .getInput('patterns')
     .split(' ')
@@ -36,9 +34,9 @@ async function run() {
     })
 
   const version = await getEslintVersion()
-  console.log('Running ESLint %s', version)6
+  console.log('Running ESLint %s', version)
 
-  await runEslint(patterns)
+  await runEslint(patterns, {cwd: core.getInput('working-directory')})
 
   // const opts: eslint.CLIEngine.Options = {}
   // if (workingDir) {

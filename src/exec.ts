@@ -5,18 +5,23 @@ interface CommandOutput {
   stderr: string
 }
 
-interface ExecOptions {
+export interface ExecOptions {
+  cwd?: string
   failOnStderr?: boolean
 }
 
 export async function captureOutput(
   command: string,
   args: string[],
-  opts: ExecOptions = {},
+  opt: ExecOptions = {},
 ): Promise<CommandOutput> {
   let stdout = ''
   let stderr = ''
+
+  const {cwd} = opt
+
   await exec.exec(command, args, {
+    cwd,
     listeners: {
       stdout: (data: Buffer): void => {
         stdout += data.toString()
@@ -29,7 +34,7 @@ export async function captureOutput(
   stdout = stdout.trim()
   stderr = stderr.trim()
 
-  if (opts.failOnStderr && stderr.length) {
+  if (opt.failOnStderr && stderr.length) {
     throw new Error('Command failed (stderr was not empty)')
   }
 
