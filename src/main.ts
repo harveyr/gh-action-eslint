@@ -44,6 +44,9 @@ async function run() {
     opts.cwd = workingDir
   }
   const cli = new eslint.CLIEngine(opts)
+
+  console.log('Running ESLint v%s', cli.version)
+
   const report = cli.executeOnFiles(patterns)
   const { results } = report
 
