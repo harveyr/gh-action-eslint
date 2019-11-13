@@ -1,5 +1,6 @@
 import * as eslint from 'eslint'
 import * as core from '@actions/core'
+import { runEslint } from './eslint'
 
 // TODO: Use a TS import once this is fixed: https://github.com/actions/toolkit/issues/199
 // import * as github from '@actions/github'
@@ -33,70 +34,66 @@ async function run() {
       return p.length > 0
     })
 
-  console.log(
-    `Running ESLint against ${patterns} from dir ${
-      workingDir ? workingDir : 'current working directory'
-    }`,
-  )
+  await runEslint(patterns)
 
-  const opts: eslint.CLIEngine.Options = {}
-  if (workingDir) {
-    opts.cwd = workingDir
-  }
-  const cli = new eslint.CLIEngine(opts)
-  const report = cli.executeOnFiles(patterns)
-  const { results } = report
+  // const opts: eslint.CLIEngine.Options = {}
+  // if (workingDir) {
+  //   opts.cwd = workingDir
+  // }
+  // const cli = new eslint.CLIEngine(opts)
+  // // const report = cli.executeOnFiles(patterns)
+  // // const { results } = report
 
-  const annotations = []
-  for (const result of results) {
-    const { filePath, messages } = result
-    const path = filePath.substring(GITHUB_WORKSPACE.length + 1)
-    for (const msg of messages) {
-      const { line, severity, ruleId, message } = msg
-      if (!line) {
-        core.warning(`Not including annotation with no 'line' value: ${JSON.stringify(msg)}`)
-        continue
-      }
-      annotations.push({
-        path,
-        start_line: line,
-        end_line: line,
-        annotation_level: getAnnotationLevel(severity),
-        message: `[${ruleId}] ${message}`,
-      })
-    }
-  }
+  // const annotations = []
+  // for (const result of results) {
+  //   const { filePath, messages } = result
+  //   const path = filePath.substring(GITHUB_WORKSPACE.length + 1)
+  //   for (const msg of messages) {
+  //     const { line, severity, ruleId, message } = msg
+  //     if (!line) {
+  //       core.warning(`Not including annotation with no 'line' value: ${JSON.stringify(msg)}`)
+  //       continue
+  //     }
+  //     annotations.push({
+  //       path,
+  //       start_line: line,
+  //       end_line: line,
+  //       annotation_level: getAnnotationLevel(severity),
+  //       message: `[${ruleId}] ${message}`,
+  //     })
+  //   }
+  // }
 
-  const repoData = github.context.payload.repository
-  if (!repoData) {
-    return core.setFailed('repository not found')
-  }
+  // const repoData = github.context.payload.repository
+  // if (!repoData) {
+  //   return core.setFailed('repository not found')
+  // }
 
-  const [owner, repo] = GITHUB_REPOSITORY.split('/')
+  // const [owner, repo] = GITHUB_REPOSITORY.split('/')
 
-  core.debug(`Found Github owner ${owner}, repo ${repo}`)
+  // core.debug(`Found Github owner ${owner}, repo ${repo}`)
 
-  const githubToken = core.getInput('github-token')
-  if (!githubToken) {
-    return core.setFailed('github-token is required')
-  }
+  // const githubToken = core.getInput('github-token')
+  // if (!githubToken) {
+  //   return core.setFailed('github-token is required')
+  // }
 
-  const client = new github.GitHub(githubToken)
+  // const client = new github.GitHub(githubToken)
 
-  console.log(`Posting ${annotations.length} annotations`)
+  // console.log(`Posting ${annotations.length} annotations`)
 
-  return client.checks.create({
-    name: 'ESLint',
-    conclusion: annotations.length ? 'failure' : 'success',
-    head_sha: GITHUB_SHA,
-    owner,
-    repo,
-    output: {
-      title: 'ESLint',
-      summary: `${annotations.length} lints reported`,
-      annotations,
-    },
-  })
+  // return client.checks.create({
+  //   name: 'ESLint',
+  //   conclusion: annotations.length ? 'failure' : 'success',
+  //   head_sha: GITHUB_SHA,
+  //   owner,
+  //   repo,
+  //   output: {
+  //     title: 'ESLint',
+  //     summary: `${annotations.length} lints reported`,
+  //     annotations,
+  //   },
+  // })
 }
 
 function getAnnotationLevel(
