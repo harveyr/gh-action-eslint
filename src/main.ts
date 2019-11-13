@@ -1,4 +1,4 @@
-import * as eslint from 'eslint'
+// import * as eslint from 'eslint'
 import * as core from '@actions/core'
 import { runEslint } from './eslint'
 
