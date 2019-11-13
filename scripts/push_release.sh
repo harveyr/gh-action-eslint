@@ -9,6 +9,6 @@ git diff --quiet && git diff --staged --quiet ||  git commit -m "node_modules"
 
 npm run build
 git add lib
-git diff --quiet && git diff --staged --quiet || git commit -m "build"
+git diff --quiet && git diff --staged --quiet || git commit -am "build"
 
 git push
