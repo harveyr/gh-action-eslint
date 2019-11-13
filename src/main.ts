@@ -8,6 +8,20 @@ const github = require('@actions/github')
 
 const { GITHUB_REPOSITORY, GITHUB_SHA, GITHUB_WORKSPACE } = process.env
 
+
+function getAnnotationLevel(
+  severity: string,
+): 'notice' | 'warning' | 'failure' {
+  if (severity === 'error') {
+    return 'failure'
+  }
+  // not sure what the actual string is yet
+  if (severity.indexOf('warn') === 0) {
+    return 'warning'
+  }
+  return 'notice'
+}
+
 async function run() {
   if (!GITHUB_WORKSPACE) {
     core.setFailed(
@@ -32,8 +46,8 @@ async function run() {
       return p.length > 0
     })
 
-  const version = await getEslintVersion()
-  console.log('Running ESLint %s', version)
+  // Cause the version to be printed to the logs
+  await getEslintVersion()
 
   const lints = await runEslint(patterns, {
     cwd: core.getInput('working-directory'),
@@ -83,18 +97,6 @@ async function run() {
   })
 }
 
-function getAnnotationLevel(
-  severity: string,
-): 'notice' | 'warning' | 'failure' {
-  if (severity === 'error') {
-    return 'failure'
-  }
-  // not sure what the actual string is yet
-  if (severity.indexOf('warn') === 0) {
-    return 'warning'
-  }
-  return 'notice'
-}
 
 run().catch(err => {
   core.error(err)

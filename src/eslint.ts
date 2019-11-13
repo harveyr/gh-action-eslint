@@ -21,8 +21,8 @@ export async function getVersion() {
 
 export async function runEslint(patterns: string[], opt: ExecOptions = {}): Promise<Lint[]> {
   opt.failOnStdErr = false
-  const args = ['eslint', '--format=compact', '--quiet'].concat(patterns)
-  const { stderr } = await captureOutput('npx', args, opt)
+  const args = ['node_modules/.bin/eslint', '--format=compact', '--quiet'].concat(patterns)
+  const { stderr } = await captureOutput('node', args, opt)
 
   const lines = stderr.split('\n')
   const lints: Lint[] = []
