@@ -1,4 +1,4 @@
-import {captureOutput} from './exec'
+import {ExecOptions, captureOutput} from './exec'
 
 export async function getVersion() {
   const {stdout} = await captureOutput('npx', ['eslint', '--version'], {failOnStderr: true})
@@ -6,9 +6,9 @@ export async function getVersion() {
 }
 
 
-export async function runEslint(patterns: string[]) {
+export async function runEslint(patterns: string[], opt: ExecOptions = {}) {
   const args = ['eslint', '--format=compact', '--quiet'].concat(patterns)
-  const {stdout, stderr} = await captureOutput('npx', args)
+  const {stdout, stderr} = await captureOutput('npx', args, opt)
 
   console.log('STDOUT:\n', stdout)
   console.log('STDERR:\n', stderr)
