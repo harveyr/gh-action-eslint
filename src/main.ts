@@ -3,6 +3,8 @@ import { runEslint, getVersion as getEslintVersion } from './eslint'
 
 // TODO: Use a TS import once this is fixed: https://github.com/actions/toolkit/issues/199
 // import * as github from '@actions/github'
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const github = require('@actions/github')
 
 const { GITHUB_REPOSITORY, GITHUB_SHA, GITHUB_WORKSPACE } = process.env
@@ -34,7 +36,7 @@ async function run() {
     })
 
   const version = await getEslintVersion()
-  console.log('Running ESLint %s', version)
+  console.log('Running ESLint %s', version)6
 
   await runEslint(patterns)
 
