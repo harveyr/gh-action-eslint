@@ -87,6 +87,7 @@ async function postAnnotations(lints: Lint[]): Promise<void> {
 }
 
 async function run(): Promise<void> {
+  const cwd = core.getInput('working-directory')
   const patterns = core
     .getInput('patterns')
     .split(' ')
@@ -99,11 +100,9 @@ async function run(): Promise<void> {
 
   // Cause the version to be printed to the logs. We want to make sure we're
   // using the version in the repo under test, not the one from this repo.
-  await getEslintVersion()
+  await getEslintVersion({ cwd })
 
-  const output = await runEslint(patterns, {
-    cwd: core.getInput('working-directory'),
-  })
+  const output = await runEslint(patterns, { cwd })
   const lints = parseEslints(output)
   if (POST_ANNOTATIONS) {
     await postAnnotations(lints)
