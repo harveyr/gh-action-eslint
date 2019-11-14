@@ -11,7 +11,29 @@ export interface Lint {
   message: string
 }
 
-export async function getEslintVersion() {
+export function parseEslintLine(line: string): Lint | null {
+  line = line.trim()
+  if (!line) {
+    return null
+  }
+
+  const match = ESLINT_REGEXP.exec(line)
+
+  if (!match || !match.length) {
+    core.warning(`No match found for line: ${line}`)
+    return null
+  }
+
+  return {
+    filePath: match[1],
+    line: parseInt(match[2], 10),
+    column: parseInt(match[3], 10),
+    severity: match[4].toLowerCase(),
+    message: match[5],
+  }
+}
+
+export async function getEslintVersion(): Promise<string> {
   const { stdout } = await captureOutput('npx', ['eslint', '--version'], {
     failOnStdErr: true,
   })
@@ -42,9 +64,7 @@ export async function runEslint(
   return stdout + stderr
 }
 
-export function parseEslints(
-  output: string
-): Lint[] {
+export function parseEslints(output: string): Lint[] {
   const lines = output.split('\n')
   const lints: Lint[] = []
   for (const line of lines) {
@@ -54,26 +74,4 @@ export function parseEslints(
     }
   }
   return lints
-}
-
-export function parseEslintLine(line: string): Lint | null {
-  line = line.trim()
-  if (!line) {
-    return null
-  }
-
-  const match = ESLINT_REGEXP.exec(line)
-
-  if (!match || !match.length) {
-    core.warning(`No match found for line: ${line}`)
-    return null
-  }
-
-  return {
-    filePath: match[1],
-    line: parseInt(match[2], 10),
-    column: parseInt(match[3], 10),
-    severity: match[4].toLowerCase(),
-    message: match[5],
-  }
 }

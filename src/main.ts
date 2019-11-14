@@ -3,7 +3,7 @@ import { Lint, runEslint, getEslintVersion, parseEslints } from './eslint'
 
 // TODO: Use a TS import once this is fixed: https://github.com/actions/toolkit/issues/199
 // import * as github from '@actions/github'
-
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const github = require('@actions/github')
 
 const { GITHUB_REPOSITORY, GITHUB_SHA, GITHUB_WORKSPACE } = process.env
@@ -25,18 +25,15 @@ function getAnnotationLevel(
   return 'notice'
 }
 
-function postAnnotations(lints: Lint[]) {
+async function postAnnotations(lints: Lint[]): Promise<void> {
   if (!GITHUB_WORKSPACE) {
-    core.setFailed(
+    return core.setFailed(
       'GITHUB_WORKSPACE not set. This should happen automatically.',
     )
-    return
   }
-
   if (!GITHUB_REPOSITORY) {
     return core.setFailed('GITHUB_REPOSITORY was not set')
   }
-
   if (!GITHUB_SHA) {
     return core.setFailed('GITHUB_SHA was not set')
   }
@@ -47,8 +44,11 @@ function postAnnotations(lints: Lint[]) {
     const path = filePath.substring(GITHUB_WORKSPACE.length + 1)
     annotations.push({
       path,
+      // eslint-disable-next-line @typescript-eslint/camelcase
       start_line: line,
+      // eslint-disable-next-line @typescript-eslint/camelcase
       end_line: line,
+      // eslint-disable-next-line @typescript-eslint/camelcase
       annotation_level: getAnnotationLevel(severity),
       message,
     })
@@ -71,9 +71,10 @@ function postAnnotations(lints: Lint[]) {
 
   console.log(`Posting ${annotations.length} annotations`)
 
-  return client.checks.create({
+  await client.checks.create({
     name: 'ESLint',
     conclusion: annotations.length ? 'failure' : 'success',
+    // eslint-disable-next-line @typescript-eslint/camelcase
     head_sha: GITHUB_SHA,
     owner,
     repo,
@@ -85,7 +86,7 @@ function postAnnotations(lints: Lint[]) {
   })
 }
 
-async function run() {
+async function run(): Promise<void> {
   const patterns = core
     .getInput('patterns')
     .split(' ')

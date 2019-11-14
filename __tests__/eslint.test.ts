@@ -1,6 +1,6 @@
 import {parseEslintLine} from '../src/eslint'
 
-test('dummy', () => {
+test('eslint parsing', () => {
   const parsed = parseEslintLine("/Users/john.bob/dev/gh-action-eslint/src/main.ts: line 7, col 16, Error - Require statement not part of import statement. (@typescript-eslint/no-var-requires)")
   expect(parsed!.filePath).toEqual('/Users/john.bob/dev/gh-action-eslint/src/main.ts')
   expect(parsed!.line).toEqual(7)
