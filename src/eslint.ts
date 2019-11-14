@@ -11,38 +11,12 @@ export interface Lint {
   message: string
 }
 
-export async function getEslintVersion() {
-  const { stdout } = await captureOutput('npx', ['eslint', '--version'], {
-    failOnStdErr: true,
-  })
-  return stdout
-}
-
-export async function runEslint(
-  patterns: string[],
-  opt: ExecOptions = {},
-): Promise<Lint[]> {
-  opt.failOnStdErr = false
-  const args = [
-    'node_modules/.bin/eslint',
-    '--format=compact',
-    '--quiet',
-  ].concat(patterns)
-  const { stderr } = await captureOutput('node', args, opt)
-
-  const lines = stderr.split('\n')
-  const lints: Lint[] = []
-  for (const line of lines) {
-    const lint = parseEslintLine(line)
-    if (lint) {
-      lints.push(lint)
-    }
+export function parseEslintLine(line: string): Lint | null {
+  line = line.trim()
+  if (!line) {
+    return null
   }
 
-  return lints
-}
-
-export function parseEslintLine(line: string): Lint | null {
   const match = ESLINT_REGEXP.exec(line)
 
   if (!match || !match.length) {
@@ -57,4 +31,47 @@ export function parseEslintLine(line: string): Lint | null {
     severity: match[4].toLowerCase(),
     message: match[5],
   }
+}
+
+export async function getEslintVersion(): Promise<string> {
+  const { stdout } = await captureOutput('npx', ['eslint', '--version'], {
+    failOnStdErr: true,
+  })
+  return stdout
+}
+
+export async function runEslint(
+  patterns: string[],
+  opt: ExecOptions = {},
+): Promise<string> {
+  opt.failOnStdErr = false
+  const args = [
+    'node_modules/.bin/eslint',
+    '--format=compact',
+    '--quiet',
+  ].concat(patterns)
+  const { stdout, stderr } = await captureOutput('node', args, opt)
+
+  const lines = stderr.split('\n')
+  const lints: Lint[] = []
+  for (const line of lines) {
+    const lint = parseEslintLine(line)
+    if (lint) {
+      lints.push(lint)
+    }
+  }
+
+  return stdout + stderr
+}
+
+export function parseEslints(output: string): Lint[] {
+  const lines = output.split('\n')
+  const lints: Lint[] = []
+  for (const line of lines) {
+    const lint = parseEslintLine(line)
+    if (lint) {
+      lints.push(lint)
+    }
+  }
+  return lints
 }

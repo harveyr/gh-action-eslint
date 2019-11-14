@@ -1,15 +1,15 @@
 import * as core from '@actions/core'
-import { Lint, runEslint, getEslintVersion } from './eslint'
+import { Lint, runEslint, getEslintVersion, parseEslints } from './eslint'
 
 // TODO: Use a TS import once this is fixed: https://github.com/actions/toolkit/issues/199
 // import * as github from '@actions/github'
-
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const github = require('@actions/github')
 
 const { GITHUB_REPOSITORY, GITHUB_SHA, GITHUB_WORKSPACE } = process.env
 
-// It appears the setup-node step adds a "problem matcher" that will create
-// annotations automatically!
+// It appears the setup-node step adds a "problem matcher" that will catch lints
+// and create annotations automatically!
 const POST_ANNOTATIONS = false
 
 function getAnnotationLevel(
@@ -25,18 +25,15 @@ function getAnnotationLevel(
   return 'notice'
 }
 
-function postAnnotations(lints: Lint[]) {
+async function postAnnotations(lints: Lint[]): Promise<void> {
   if (!GITHUB_WORKSPACE) {
-    core.setFailed(
+    return core.setFailed(
       'GITHUB_WORKSPACE not set. This should happen automatically.',
     )
-    return
   }
-
   if (!GITHUB_REPOSITORY) {
     return core.setFailed('GITHUB_REPOSITORY was not set')
   }
-
   if (!GITHUB_SHA) {
     return core.setFailed('GITHUB_SHA was not set')
   }
@@ -47,8 +44,11 @@ function postAnnotations(lints: Lint[]) {
     const path = filePath.substring(GITHUB_WORKSPACE.length + 1)
     annotations.push({
       path,
+      // eslint-disable-next-line @typescript-eslint/camelcase
       start_line: line,
+      // eslint-disable-next-line @typescript-eslint/camelcase
       end_line: line,
+      // eslint-disable-next-line @typescript-eslint/camelcase
       annotation_level: getAnnotationLevel(severity),
       message,
     })
@@ -71,9 +71,10 @@ function postAnnotations(lints: Lint[]) {
 
   console.log(`Posting ${annotations.length} annotations`)
 
-  return client.checks.create({
+  await client.checks.create({
     name: 'ESLint',
     conclusion: annotations.length ? 'failure' : 'success',
+    // eslint-disable-next-line @typescript-eslint/camelcase
     head_sha: GITHUB_SHA,
     owner,
     repo,
@@ -85,7 +86,7 @@ function postAnnotations(lints: Lint[]) {
   })
 }
 
-async function run() {
+async function run(): Promise<void> {
   const patterns = core
     .getInput('patterns')
     .split(' ')
@@ -100,14 +101,15 @@ async function run() {
   // using the version in the repo under test, not the one from this repo.
   await getEslintVersion()
 
-  const lints = await runEslint(patterns, {
+  const output = await runEslint(patterns, {
     cwd: core.getInput('working-directory'),
   })
-
-  console.log('Got %s lints', lints.length)
-
+  const lints = parseEslints(output)
   if (POST_ANNOTATIONS) {
     await postAnnotations(lints)
+  }
+  if (lints.length) {
+    core.setFailed(`ESLint found ${lints.length} issues`)
   }
 }
 

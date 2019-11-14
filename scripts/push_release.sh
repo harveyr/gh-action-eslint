@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Script to commit and push source and node_modules to a releases/ branch.
+
 set -e
 
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
