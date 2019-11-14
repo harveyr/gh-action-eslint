@@ -1,5 +1,5 @@
 import * as core from '@actions/core'
-import { Lint, runEslint, getEslintVersion } from './eslint'
+import { Lint, runEslint, getEslintVersion, parseEslints } from './eslint'
 
 // TODO: Use a TS import once this is fixed: https://github.com/actions/toolkit/issues/199
 // import * as github from '@actions/github'
@@ -100,9 +100,10 @@ async function run() {
   // using the version in the repo under test, not the one from this repo.
   await getEslintVersion()
 
-  const lints = await runEslint(patterns, {
+  const output = await runEslint(patterns, {
     cwd: core.getInput('working-directory'),
   })
+  const lints = parseEslints(output)
 
   console.log('Got %s lints', lints.length)
 

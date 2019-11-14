@@ -21,14 +21,14 @@ export async function getEslintVersion() {
 export async function runEslint(
   patterns: string[],
   opt: ExecOptions = {},
-): Promise<Lint[]> {
+): Promise<string> {
   opt.failOnStdErr = false
   const args = [
     'node_modules/.bin/eslint',
     '--format=compact',
     '--quiet',
   ].concat(patterns)
-  const { stderr } = await captureOutput('node', args, opt)
+  const { stdout, stderr } = await captureOutput('node', args, opt)
 
   const lines = stderr.split('\n')
   const lints: Lint[] = []
@@ -39,6 +39,20 @@ export async function runEslint(
     }
   }
 
+  return stdout + stderr
+}
+
+export function parseEslints(
+  output: string
+): Lint[] {
+  const lines = output.split('\n')
+  const lints: Lint[] = []
+  for (const line of lines) {
+    const lint = parseEslintLine(line)
+    if (lint) {
+      lints.push(lint)
+    }
+  }
   return lints
 }
 
