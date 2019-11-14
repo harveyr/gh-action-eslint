@@ -1,7 +1,7 @@
 import * as core from '@actions/core'
 import * as kit from '@harveyr/github-actions-kit'
-import { getEslintVersion, parseEslints, runEslint } from './eslint'
 import { getAnnotationForLint } from './annotations'
+import { getEslintVersion, parseEslints, runEslint } from './eslint'
 import { Lint } from './types'
 
 // It appears the setup-node step adds a "problem matcher" that will catch lints
