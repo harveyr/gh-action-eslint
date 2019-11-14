@@ -15,14 +15,15 @@ export async function captureOutput(
   args: string[],
   opt: ExecOptions = {},
 ): Promise<CommandOutput> {
-  let stdout = ''
-  let stderr = ''
+  console.log('FIXME: opt', opt)
 
   const { cwd, failOnStdErr } = opt
   if (cwd) {
-    console.log('Running in subdir: %s', cwd)
+    console.log('FIXME: Running in subdir: %s', cwd)
   }
 
+  let stdout = ''
+  let stderr = ''
   await exec.exec(command, args, {
     cwd,
     failOnStdErr,
