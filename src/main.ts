@@ -37,8 +37,11 @@ async function run(): Promise<void> {
   // using the version in the repo under test, not the one from this repo.
   await getEslintVersion({ cwd })
 
-  const output = await runEslint(patterns, { cwd })
-  const lints = parseEslints(output)
+  let lints: Lint[] = []
+  if (patterns.length) {
+    const output = await runEslint(patterns, { cwd })
+    lints = parseEslints(output)
+  }
   await postCheckRun(lints)
 }
 
