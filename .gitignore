@@ -1,6 +1,7 @@
 # make sure we're pointing at the public registry
 !.npmrc
 
+# lib and node_modules are force-added only to releases/ branches
 lib
 node_modules
 
