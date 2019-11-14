@@ -18,7 +18,10 @@ export async function captureOutput(
   let stdout = ''
   let stderr = ''
 
-  const {cwd, failOnStdErr} = opt
+  const { cwd, failOnStdErr } = opt
+  if (cwd) {
+    console.log('Running in subdir: %s', cwd)
+  }
 
   await exec.exec(command, args, {
     cwd,
