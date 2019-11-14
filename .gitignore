@@ -1,5 +1,7 @@
+# make sure we're pointing at the public registry
 !.npmrc
 
+lib
 node_modules
 
 __tests__/runner/*
