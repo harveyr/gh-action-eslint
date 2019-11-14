@@ -57,6 +57,11 @@ export function parseEslints(
 }
 
 export function parseEslintLine(line: string): Lint | null {
+  line = line.trim()
+  if (!line) {
+    return null
+  }
+
   const match = ESLINT_REGEXP.exec(line)
 
   if (!match || !match.length) {

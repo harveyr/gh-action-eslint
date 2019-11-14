@@ -104,13 +104,9 @@ async function run() {
     cwd: core.getInput('working-directory'),
   })
   const lints = parseEslints(output)
-
-  console.log('Got %s lints', lints.length)
-
   if (POST_ANNOTATIONS) {
     await postAnnotations(lints)
   }
-
   if (lints.length) {
     core.setFailed(`ESLint found ${lints.length} issues`)
   }
