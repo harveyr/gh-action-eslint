@@ -15,11 +15,9 @@ export async function captureOutput(
   args: string[],
   opt: ExecOptions = {},
 ): Promise<CommandOutput> {
-  console.log('FIXME: opt', opt)
-
   const { cwd, failOnStdErr } = opt
   if (cwd) {
-    console.log('FIXME: Running in subdir: %s', cwd)
+    console.log('Running in subdir: %s', cwd)
   }
 
   let stdout = ''
