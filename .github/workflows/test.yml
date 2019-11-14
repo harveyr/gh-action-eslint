@@ -1,4 +1,4 @@
-name: 'Test action'
+name: CI
 on: [push]
 
 jobs:
@@ -17,9 +17,3 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           patterns: src/**.ts
-      - name: run in subdir
-        uses: ./
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          patterns: '**.ts'
-          working-directory: ./src

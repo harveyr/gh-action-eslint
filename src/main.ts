@@ -1,18 +1,35 @@
-import * as eslint from 'eslint'
 import * as core from '@actions/core'
+import { Lint, runEslint, getEslintVersion, parseEslints } from './eslint'
 
 // TODO: Use a TS import once this is fixed: https://github.com/actions/toolkit/issues/199
 // import * as github from '@actions/github'
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const github = require('@actions/github')
 
 const { GITHUB_REPOSITORY, GITHUB_SHA, GITHUB_WORKSPACE } = process.env
 
-async function run() {
+// It appears the setup-node step adds a "problem matcher" that will catch lints
+// and create annotations automatically!
+const POST_ANNOTATIONS = false
+
+function getAnnotationLevel(
+  severity: string,
+): 'notice' | 'warning' | 'failure' {
+  if (severity === 'error') {
+    return 'failure'
+  }
+  // not sure what the actual string is yet
+  if (severity.indexOf('warn') === 0) {
+    return 'warning'
+  }
+  return 'notice'
+}
+
+async function postAnnotations(lints: Lint[]): Promise<void> {
   if (!GITHUB_WORKSPACE) {
-    core.setFailed(
+    return core.setFailed(
       'GITHUB_WORKSPACE not set. This should happen automatically.',
     )
-    return
   }
   if (!GITHUB_REPOSITORY) {
     return core.setFailed('GITHUB_REPOSITORY was not set')
@@ -21,50 +38,20 @@ async function run() {
     return core.setFailed('GITHUB_SHA was not set')
   }
 
-  const workingDir = core.getInput('working-directory')
-
-  const patterns = core
-    .getInput('patterns')
-    .split(' ')
-    .map(p => {
-      return p.trim()
-    })
-    .filter(p => {
-      return p.length > 0
-    })
-
-  console.log(
-    `Running ESLint against ${patterns} from dir ${
-      workingDir ? workingDir : 'current working directory'
-    }`,
-  )
-
-  const opts: eslint.CLIEngine.Options = {}
-  if (workingDir) {
-    opts.cwd = workingDir
-  }
-  const cli = new eslint.CLIEngine(opts)
-  const report = cli.executeOnFiles(patterns)
-  const { results } = report
-
   const annotations = []
-  for (const result of results) {
-    const { filePath, messages } = result
+  for (const lint of lints) {
+    const { filePath, line, message, severity } = lint
     const path = filePath.substring(GITHUB_WORKSPACE.length + 1)
-    for (const msg of messages) {
-      const { line, severity, ruleId, message } = msg
-      if (!line) {
-        core.warning(`Not including annotation with no 'line' value: ${JSON.stringify(msg)}`)
-        continue
-      }
-      annotations.push({
-        path,
-        start_line: line,
-        end_line: line,
-        annotation_level: getAnnotationLevel(severity),
-        message: `[${ruleId}] ${message}`,
-      })
-    }
+    annotations.push({
+      path,
+      // eslint-disable-next-line @typescript-eslint/camelcase
+      start_line: line,
+      // eslint-disable-next-line @typescript-eslint/camelcase
+      end_line: line,
+      // eslint-disable-next-line @typescript-eslint/camelcase
+      annotation_level: getAnnotationLevel(severity),
+      message,
+    })
   }
 
   const repoData = github.context.payload.repository
@@ -73,7 +60,6 @@ async function run() {
   }
 
   const [owner, repo] = GITHUB_REPOSITORY.split('/')
-
   core.debug(`Found Github owner ${owner}, repo ${repo}`)
 
   const githubToken = core.getInput('github-token')
@@ -85,9 +71,10 @@ async function run() {
 
   console.log(`Posting ${annotations.length} annotations`)
 
-  return client.checks.create({
+  await client.checks.create({
     name: 'ESLint',
     conclusion: annotations.length ? 'failure' : 'success',
+    // eslint-disable-next-line @typescript-eslint/camelcase
     head_sha: GITHUB_SHA,
     owner,
     repo,
@@ -99,16 +86,30 @@ async function run() {
   })
 }
 
-function getAnnotationLevel(
-  severity: number,
-): 'notice' | 'warning' | 'failure' {
-  if (severity === 1) {
-    return 'warning'
+async function run(): Promise<void> {
+  const cwd = core.getInput('working-directory')
+  const patterns = core
+    .getInput('patterns')
+    .split(' ')
+    .map(p => {
+      return p.trim()
+    })
+    .filter(p => {
+      return p.length > 0
+    })
+
+  // Cause the version to be printed to the logs. We want to make sure we're
+  // using the version in the repo under test, not the one from this repo.
+  await getEslintVersion({ cwd })
+
+  const output = await runEslint(patterns, { cwd })
+  const lints = parseEslints(output)
+  if (POST_ANNOTATIONS) {
+    await postAnnotations(lints)
   }
-  if (severity === 2) {
-    return 'failure'
+  if (lints.length) {
+    core.setFailed(`ESLint found ${lints.length} issues`)
   }
-  return 'notice'
 }
 
 run().catch(err => {
