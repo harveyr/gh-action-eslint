@@ -1,20 +1,20 @@
 import * as core from '@actions/core'
 import { Lint, runEslint, getEslintVersion, parseEslints } from './eslint'
 
+import * as kit from '@harveyr/github-actions-kit'
+
 // TODO: Use a TS import once this is fixed: https://github.com/actions/toolkit/issues/199
 // import * as github from '@actions/github'
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const github = require('@actions/github')
 
-const { GITHUB_REPOSITORY, GITHUB_SHA, GITHUB_WORKSPACE } = process.env
+const GITHUB_WORKSPACE = kit.getWorkspace()
 
 // It appears the setup-node step adds a "problem matcher" that will catch lints
 // and create annotations automatically!
 const POST_ANNOTATIONS = false
 
-function getAnnotationLevel(
-  severity: string,
-): 'notice' | 'warning' | 'failure' {
+function getAnnotationLevel(severity: string): kit.AnnotationLevel {
   if (severity === 'error') {
     return 'failure'
   }
@@ -23,6 +23,19 @@ function getAnnotationLevel(
     return 'warning'
   }
   return 'notice'
+}
+
+function getAnnotationForLint(lint: Lint): kit.CheckRunAnnotation {
+  const { filePath, line, message, severity } = lint
+  const path = filePath.substring(GITHUB_WORKSPACE.length + 1)
+  return {
+    path,
+    // eslint-disable-next-line @typescript-eslint/camelcase
+    startLine: line,
+    // eslint-disable-next-line @typescript-eslint/camelcase
+    level: getAnnotationLevel(severity),
+    message,
+  }
 }
 
 async function postAnnotations(lints: Lint[]): Promise<void> {
