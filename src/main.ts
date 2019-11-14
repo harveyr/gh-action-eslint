@@ -8,8 +8,8 @@ const github = require('@actions/github')
 
 const { GITHUB_REPOSITORY, GITHUB_SHA, GITHUB_WORKSPACE } = process.env
 
-// It appears the setup-node step adds a "problem matcher" that will create
-// annotations automatically!
+// It appears the setup-node step adds a "problem matcher" that will catch lints
+// and create annotations automatically!
 const POST_ANNOTATIONS = false
 
 function getAnnotationLevel(
