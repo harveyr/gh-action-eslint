@@ -1,5 +1,5 @@
-name: Changed files by extension
-description: Outputs files changed since master branch by extension
+name: ESLint Github Action
+description: Runs ESLint against provided file patterns
 author: Harvey Rogers
 runs:
   using: node12
