@@ -1,16 +1,18 @@
 import * as core from '@actions/core'
-import { ExecOptions, captureOutput } from './exec'
+import * as kit from '@harveyr/github-actions-kit'
+import { Lint } from './types'
 
 const ESLINT_PATH = 'node_modules/.bin/eslint'
 
 const ESLINT_REGEXP = /(\S+): line (\d+), col (\d+), (\w+) - (.+)/
 
-export interface Lint {
-  filePath: string
-  line: number
-  column: number
-  severity: string
-  message: string
+const IGNORE_LINE_REGEXPS = [/^\d+ problems?$/i]
+
+export function shouldIgnoreLine(line: string): boolean {
+  const match = IGNORE_LINE_REGEXPS.find(regexp => {
+    return regexp.test(line)
+  })
+  return Boolean(match)
 }
 
 export function parseEslintLine(line: string): Lint | null {
@@ -22,7 +24,9 @@ export function parseEslintLine(line: string): Lint | null {
   const match = ESLINT_REGEXP.exec(line)
 
   if (!match || !match.length) {
-    core.warning(`No match found for line: ${line}`)
+    if (!shouldIgnoreLine(line)) {
+      core.warning(`No match found for ESLint line: ${line}`)
+    }
     return null
   }
 
@@ -35,9 +39,11 @@ export function parseEslintLine(line: string): Lint | null {
   }
 }
 
-export async function getEslintVersion(opt: ExecOptions = {}): Promise<string> {
+export async function getEslintVersion(
+  opt: kit.ExecOptions = {},
+): Promise<string> {
   opt.failOnStdErr = true
-  const { stdout } = await captureOutput(
+  const { stdout } = await kit.execAndCapture(
     'node',
     [ESLINT_PATH, '--version'],
     opt,
@@ -47,11 +53,11 @@ export async function getEslintVersion(opt: ExecOptions = {}): Promise<string> {
 
 export async function runEslint(
   patterns: string[],
-  opt: ExecOptions = {},
+  opt: kit.ExecOptions = {},
 ): Promise<string> {
   opt.failOnStdErr = false
-  const args = [ESLINT_PATH, '--format=compact', '--quiet'].concat(patterns)
-  const { stdout, stderr } = await captureOutput('node', args, opt)
+  const args = [ESLINT_PATH, '--format=compact'].concat(patterns)
+  const { stdout, stderr } = await kit.execAndCapture('node', args, opt)
 
   const lines = stderr.split('\n')
   const lints: Lint[] = []

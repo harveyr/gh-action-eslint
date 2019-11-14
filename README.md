@@ -1,3 +1,3 @@
 # gh-action-eslint
 
-ESLint Github Action.
+ESLint Github Action that accepts file patterns to run against.
