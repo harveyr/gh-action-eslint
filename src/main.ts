@@ -109,6 +109,10 @@ async function run() {
   if (POST_ANNOTATIONS) {
     await postAnnotations(lints)
   }
+
+  if (lints.length) {
+    core.setFailed(`ESLint found ${lints.length} issues`)
+  }
 }
 
 run().catch(err => {

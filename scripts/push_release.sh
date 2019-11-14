@@ -1,6 +1,15 @@
 #!/bin/bash
 
+# Script to commit and push source and node_modules to a releases/ branch.
+
 set -e
+
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+if [[ ${BRANCH} != releases/* ]]; then
+  echo "This can run only on release branches. Current branch is ${BRANCH}"
+  exit 1
+fi
+
 set -x
 
 npm ci --only=production
