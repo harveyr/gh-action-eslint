@@ -35,10 +35,13 @@ export function parseEslintLine(line: string): Lint | null {
   }
 }
 
-export async function getEslintVersion(): Promise<string> {
-  const { stdout } = await captureOutput('node', [ESLINT_PATH, '--version'], {
-    failOnStdErr: true,
-  })
+export async function getEslintVersion(opt: ExecOptions = {}): Promise<string> {
+  opt.failOnStdErr = true
+  const { stdout } = await captureOutput(
+    'node',
+    [ESLINT_PATH, '--version'],
+    opt,
+  )
   return stdout
 }
 
