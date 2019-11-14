@@ -1,28 +1,91 @@
 import * as core from '@actions/core'
-import { runEslint, getVersion as getEslintVersion } from './eslint'
+import { Lint, runEslint, getEslintVersion } from './eslint'
 
 // TODO: Use a TS import once this is fixed: https://github.com/actions/toolkit/issues/199
 // import * as github from '@actions/github'
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const github = require('@actions/github')
 
 const { GITHUB_REPOSITORY, GITHUB_SHA, GITHUB_WORKSPACE } = process.env
 
-async function run() {
+// It appears the setup-node step adds a "problem matcher" that will create
+// annotations automatically!
+const POST_ANNOTATIONS = false
+
+function getAnnotationLevel(
+  severity: string,
+): 'notice' | 'warning' | 'failure' {
+  if (severity === 'error') {
+    return 'failure'
+  }
+  // not sure what the actual string is yet
+  if (severity.indexOf('warn') === 0) {
+    return 'warning'
+  }
+  return 'notice'
+}
+
+function postAnnotations(lints: Lint[]) {
   if (!GITHUB_WORKSPACE) {
     core.setFailed(
       'GITHUB_WORKSPACE not set. This should happen automatically.',
     )
     return
   }
+
   if (!GITHUB_REPOSITORY) {
     return core.setFailed('GITHUB_REPOSITORY was not set')
   }
+
   if (!GITHUB_SHA) {
     return core.setFailed('GITHUB_SHA was not set')
   }
 
+  const annotations = []
+  for (const lint of lints) {
+    const { filePath, line, message, severity } = lint
+    const path = filePath.substring(GITHUB_WORKSPACE.length + 1)
+    annotations.push({
+      path,
+      start_line: line,
+      end_line: line,
+      annotation_level: getAnnotationLevel(severity),
+      message,
+    })
+  }
+
+  const repoData = github.context.payload.repository
+  if (!repoData) {
+    return core.setFailed('repository not found')
+  }
+
+  const [owner, repo] = GITHUB_REPOSITORY.split('/')
+  core.debug(`Found Github owner ${owner}, repo ${repo}`)
+
+  const githubToken = core.getInput('github-token')
+  if (!githubToken) {
+    return core.setFailed('github-token is required')
+  }
+
+  const client = new github.GitHub(githubToken)
+
+  console.log(`Posting ${annotations.length} annotations`)
+
+  return client.checks.create({
+    name: 'ESLint',
+    conclusion: annotations.length ? 'failure' : 'success',
+    head_sha: GITHUB_SHA,
+    owner,
+    repo,
+    output: {
+      title: 'ESLint',
+      summary: `${annotations.length} lints reported`,
+      annotations,
+    },
+  })
+}
+
+async function run() {
   const patterns = core
     .getInput('patterns')
     .split(' ')
@@ -33,81 +96,19 @@ async function run() {
       return p.length > 0
     })
 
-  const version = await getEslintVersion()
-  console.log('Running ESLint %s', version)
+  // Cause the version to be printed to the logs. We want to make sure we're
+  // using the version in the repo under test, not the one from this repo.
+  await getEslintVersion()
 
-  await runEslint(patterns, {cwd: core.getInput('working-directory')})
+  const lints = await runEslint(patterns, {
+    cwd: core.getInput('working-directory'),
+  })
 
-  // const opts: eslint.CLIEngine.Options = {}
-  // if (workingDir) {
-  //   opts.cwd = workingDir
-  // }
-  // const cli = new eslint.CLIEngine(opts)
-  // // const report = cli.executeOnFiles(patterns)
-  // // const { results } = report
+  console.log('Got %s lints', lints.length)
 
-  // const annotations = []
-  // for (const result of results) {
-  //   const { filePath, messages } = result
-  //   const path = filePath.substring(GITHUB_WORKSPACE.length + 1)
-  //   for (const msg of messages) {
-  //     const { line, severity, ruleId, message } = msg
-  //     if (!line) {
-  //       core.warning(`Not including annotation with no 'line' value: ${JSON.stringify(msg)}`)
-  //       continue
-  //     }
-  //     annotations.push({
-  //       path,
-  //       start_line: line,
-  //       end_line: line,
-  //       annotation_level: getAnnotationLevel(severity),
-  //       message: `[${ruleId}] ${message}`,
-  //     })
-  //   }
-  // }
-
-  // const repoData = github.context.payload.repository
-  // if (!repoData) {
-  //   return core.setFailed('repository not found')
-  // }
-
-  // const [owner, repo] = GITHUB_REPOSITORY.split('/')
-
-  // core.debug(`Found Github owner ${owner}, repo ${repo}`)
-
-  // const githubToken = core.getInput('github-token')
-  // if (!githubToken) {
-  //   return core.setFailed('github-token is required')
-  // }
-
-  // const client = new github.GitHub(githubToken)
-
-  // console.log(`Posting ${annotations.length} annotations`)
-
-  // return client.checks.create({
-  //   name: 'ESLint',
-  //   conclusion: annotations.length ? 'failure' : 'success',
-  //   head_sha: GITHUB_SHA,
-  //   owner,
-  //   repo,
-  //   output: {
-  //     title: 'ESLint',
-  //     summary: `${annotations.length} lints reported`,
-  //     annotations,
-  //   },
-  // })
-}
-
-function getAnnotationLevel(
-  severity: number,
-): 'notice' | 'warning' | 'failure' {
-  if (severity === 1) {
-    return 'warning'
+  if (POST_ANNOTATIONS) {
+    await postAnnotations(lints)
   }
-  if (severity === 2) {
-    return 'failure'
-  }
-  return 'notice'
 }
 
 run().catch(err => {
