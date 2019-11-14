@@ -6,6 +6,15 @@ const ESLINT_PATH = 'node_modules/.bin/eslint'
 
 const ESLINT_REGEXP = /(\S+): line (\d+), col (\d+), (\w+) - (.+)/
 
+const IGNORE_LINE_REGEXPS = [/^\d+ problems?$/i]
+
+export function shouldIgnoreLine(line: string): boolean {
+  const match = IGNORE_LINE_REGEXPS.find(regexp => {
+    return regexp.test(line)
+  })
+  return Boolean(match)
+}
+
 export function parseEslintLine(line: string): Lint | null {
   line = line.trim()
   if (!line) {
@@ -15,7 +24,9 @@ export function parseEslintLine(line: string): Lint | null {
   const match = ESLINT_REGEXP.exec(line)
 
   if (!match || !match.length) {
-    core.warning(`No match found for line: ${line}`)
+    if (!shouldIgnoreLine(line)) {
+      core.warning(`No match found for ESLint line: ${line}`)
+    }
     return null
   }
 
