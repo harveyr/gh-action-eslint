@@ -22,5 +22,5 @@ test('line ignoring', () => {
   expect(shouldIgnoreLine('1 problems')).toBe(true)
   expect(shouldIgnoreLine('4 problems')).toBe(true)
   expect(shouldIgnoreLine('4 problemz')).toBe(false)
-  expect(shouldIgnoreLine('1 in 4 are problems')).toBe(false)
+  expect(shouldIgnoreLine(' 4 problems')).toBe(false)
 })
