@@ -1,6 +1,8 @@
 import * as core from '@actions/core'
 import { ExecOptions, captureOutput } from './exec'
 
+const ESLINT_PATH = 'node_modules/.bin/eslint'
+
 const ESLINT_REGEXP = /(\S+): line (\d+), col (\d+), (\w+) - (.+)/
 
 export interface Lint {
@@ -34,7 +36,7 @@ export function parseEslintLine(line: string): Lint | null {
 }
 
 export async function getEslintVersion(): Promise<string> {
-  const { stdout } = await captureOutput('npx', ['eslint', '--version'], {
+  const { stdout } = await captureOutput('node', [ESLINT_PATH, '--version'], {
     failOnStdErr: true,
   })
   return stdout
@@ -45,11 +47,7 @@ export async function runEslint(
   opt: ExecOptions = {},
 ): Promise<string> {
   opt.failOnStdErr = false
-  const args = [
-    'node_modules/.bin/eslint',
-    '--format=compact',
-    '--quiet',
-  ].concat(patterns)
+  const args = [ESLINT_PATH, '--format=compact', '--quiet'].concat(patterns)
   const { stdout, stderr } = await captureOutput('node', args, opt)
 
   const lines = stderr.split('\n')
