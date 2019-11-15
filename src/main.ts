@@ -8,7 +8,7 @@ import { Lint } from './types'
 // and create annotations automatically!
 const POST_ANNOTATIONS = false
 
-async function postCheckRun(lints: Lint[]): Promise<void> {
+async function postCheckRun(text: string, lints: Lint[]): Promise<void> {
   const annotations = lints.map(getAnnotationForLint)
 
   await kit.postCheckRun({
@@ -18,6 +18,7 @@ async function postCheckRun(lints: Lint[]): Promise<void> {
     // eslint-disable-next-line @typescript-eslint/camelcase
     summary: `${annotations.length} lints reported`,
     annotations: POST_ANNOTATIONS ? annotations : [],
+    text,
   })
 }
 
@@ -38,14 +39,14 @@ async function run(): Promise<void> {
   await getEslintVersion({ cwd })
 
   let lints: Lint[] = []
+  let output = ''
   if (patterns.length) {
-    const output = await runEslint(patterns, { cwd })
+    output = await runEslint(patterns, { cwd })
     lints = parseEslints(output)
   }
-  await postCheckRun(lints)
+  await postCheckRun(output, lints)
 }
 
 run().catch(err => {
-  core.error(err)
   core.setFailed(`${err}`)
 })
