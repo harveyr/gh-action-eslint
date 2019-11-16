@@ -1,6 +1,6 @@
 import * as core from '@actions/core'
 import * as kit from '@harveyr/github-actions-kit'
-import { getAnnotationForLint } from './annotations'
+import { getAnnotationForLint, getCheckRunConclusion } from './checks'
 import { getEslintVersion, parseEslints, runEslint } from './eslint'
 import { Lint } from './types'
 
@@ -10,15 +10,16 @@ const POST_ANNOTATIONS = false
 
 async function postCheckRun(text: string, lints: Lint[]): Promise<void> {
   const annotations = lints.map(getAnnotationForLint)
+  const conclusion = getCheckRunConclusion(lints)
 
   await kit.postCheckRun({
     githubToken: core.getInput('github-token'),
     name: 'ESLint',
-    conclusion: annotations.length ? 'failure' : 'success',
+    conclusion,
     // eslint-disable-next-line @typescript-eslint/camelcase
     summary: `${annotations.length} lints reported`,
-    annotations: POST_ANNOTATIONS ? annotations : [],
     text,
+    annotations: POST_ANNOTATIONS ? annotations : [],
   })
 }
 
