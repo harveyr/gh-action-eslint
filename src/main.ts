@@ -12,23 +12,6 @@ async function postCheckRun(text: string, lints: Lint[]): Promise<void> {
   const annotations = lints.map(getAnnotationForLint)
   const conclusion = getCheckRunConclusion(lints)
 
-  let warning = false
-  let error = false
-  for (const lint of lints) {
-    const severity = lint.severity.toLowerCase()
-    if (severity === 'error') {
-      error = true
-    } else if (severity === 'warning') {
-      warning = true
-    }
-  }
-  let conclusion: kit.CheckRunConclusion = 'success'
-  if (error) {
-    conclusion = 'failure'
-  } else if (warning) {
-    conclusion = 'neutral'
-  }
-
   await kit.postCheckRun({
     githubToken: core.getInput('github-token'),
     name: 'ESLint',
