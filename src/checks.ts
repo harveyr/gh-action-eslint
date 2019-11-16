@@ -1,10 +1,7 @@
 import * as kit from '@harveyr/github-actions-kit'
-import { Lint } from './types'
+import { Lint, Severity } from './types'
 
-const GITHUB_WORKSPACE = kit.getWorkspace()
-
-function getAnnotationLevel(severity: string): kit.AnnotationLevel {
-  severity = severity.toLowerCase()
+function getAnnotationLevel(severity: Severity): kit.AnnotationLevel {
   if (severity === 'error') {
     return 'failure'
   }
@@ -17,11 +14,24 @@ function getAnnotationLevel(severity: string): kit.AnnotationLevel {
 
 export function getAnnotationForLint(lint: Lint): kit.CheckRunAnnotation {
   const { filePath, line, message, severity } = lint
-  const path = filePath.substring(GITHUB_WORKSPACE.length + 1)
+  const path = filePath.substring(kit.getWorkspace().length + 1)
   return {
     path,
     startLine: line,
     level: getAnnotationLevel(severity),
     message,
   }
+}
+
+export function getCheckRunConclusion(lints: Lint[]): kit.CheckRunConclusion {
+  if (!lints.length) {
+    return 'success'
+  }
+  const errorLint = lints.find(lint => {
+    return lint.severity === 'error'
+  })
+  if (errorLint) {
+    return 'failure'
+  }
+  return 'neutral'
 }

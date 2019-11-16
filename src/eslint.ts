@@ -1,6 +1,6 @@
 import * as core from '@actions/core'
 import * as kit from '@harveyr/github-actions-kit'
-import { Lint } from './types'
+import { Lint, Severity } from './types'
 
 const ESLINT_PATH = 'node_modules/.bin/eslint'
 
@@ -34,7 +34,7 @@ export function parseEslintLine(line: string): Lint | null {
     filePath: match[1],
     line: parseInt(match[2], 10),
     column: parseInt(match[3], 10),
-    severity: match[4].toLowerCase(),
+    severity: match[4].toLowerCase() as Severity,
     message: match[5],
   }
 }

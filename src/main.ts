@@ -1,6 +1,6 @@
 import * as core from '@actions/core'
 import * as kit from '@harveyr/github-actions-kit'
-import { getAnnotationForLint } from './annotations'
+import { getAnnotationForLint, getCheckRunConclusion } from './checks'
 import { getEslintVersion, parseEslints, runEslint } from './eslint'
 import { Lint } from './types'
 
@@ -10,6 +10,7 @@ const POST_ANNOTATIONS = false
 
 async function postCheckRun(text: string, lints: Lint[]): Promise<void> {
   const annotations = lints.map(getAnnotationForLint)
+  const conclusion = getCheckRunConclusion(lints)
 
   let warning = false
   let error = false
