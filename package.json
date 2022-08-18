@@ -9,7 +9,7 @@
     "test": "jest"
   },
   "dependencies": {
-    "@actions/core": "^1.0.0",
+    "@actions/core": "^1.9.1",
     "@harveyr/github-actions-kit": "0.0.3"
   },
   "devDependencies": {
